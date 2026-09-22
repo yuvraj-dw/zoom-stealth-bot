@@ -69,8 +69,9 @@ ATTENDEE_EMAIL=you@example.com
 # Optional: Webinar registration token (from your join link)
 ZOOM_WEBINAR_TOKEN=
 
-# Google Gemini API key for meeting summaries
+# Google Gemini API key and model for meeting summaries
 GEMINI_API_KEY=your_gemini_api_key
+GEMINI_MODEL=gemini-3.6-flash
 
 # Telegram notifications and control
 TELEGRAM_BOT_TOKEN=123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ
