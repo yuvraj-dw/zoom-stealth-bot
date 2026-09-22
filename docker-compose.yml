@@ -1,0 +1,10 @@
+services:
+  zoom-bot:
+    build: .
+    container_name: zoom-attendee-bot
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - ./screenshots:/app/screenshots
+    environment:
+      TZ: Asia/Kolkata
