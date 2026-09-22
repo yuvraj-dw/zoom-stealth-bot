@@ -473,7 +473,7 @@ class SessionController {
     return await takeSnapshot(this.page, this.screenshotsDir, filename);
   }
 
-  async getMeetingSummary(apiKey) {
+  async getMeetingSummary(apiKey, preferredModel) {
     if (!this.active || !this.page) {
       return null;
     }
@@ -482,7 +482,7 @@ class SessionController {
       return 'No chat messages or Q&A questions are available yet in this session.';
     }
     const { summarizeMeetingFeed } = require('./summarizer.js');
-    return await summarizeMeetingFeed(feed.transcript, apiKey);
+    return await summarizeMeetingFeed(feed.transcript, apiKey, preferredModel);
   }
 
   async leaveMeeting() {
@@ -608,7 +608,7 @@ class SessionController {
             const feed = await extractMeetingFeed(this.page);
             if (feed.transcript && config.geminiApiKey) {
               const { summarizeMeetingFeed } = require('./summarizer.js');
-              summaryText = await summarizeMeetingFeed(feed.transcript, config.geminiApiKey);
+              summaryText = await summarizeMeetingFeed(feed.transcript, config.geminiApiKey, config.geminiModel);
             }
           } catch (e) {
             console.error('[SessionController] Error generating summary on end:', e);

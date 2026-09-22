@@ -46,9 +46,10 @@ async function callGemini(model, payload, apiKey) {
  * Sends a transcript to Gemini with model fallback and returns a structured summary.
  * @param {string} transcript 
  * @param {string} apiKey 
+ * @param {string} [preferredModel]
  * @returns {Promise<string>}
  */
-async function summarizeMeetingFeed(transcript, apiKey) {
+async function summarizeMeetingFeed(transcript, apiKey, preferredModel) {
   if (!apiKey) {
     return 'Gemini API Key not configured. Unable to generate summary.';
   }
@@ -77,7 +78,16 @@ ${transcript}`;
     }]
   });
 
-  for (const model of MODELS) {
+  // Prepare model priority list with user's preferred model first
+  const normalizedPreferred = preferredModel 
+    ? (preferredModel.startsWith('models/') ? preferredModel : `models/${preferredModel}`)
+    : null;
+
+  const candidateModels = normalizedPreferred
+    ? [normalizedPreferred, ...MODELS.filter(m => m !== normalizedPreferred)]
+    : MODELS;
+
+  for (const model of candidateModels) {
     console.log(`[Summarizer] Attempting generation with ${model}...`);
     const res = await callGemini(model, payload, apiKey);
     if (res.status === 200 && res.parsed?.candidates?.[0]?.content?.parts?.[0]?.text) {
