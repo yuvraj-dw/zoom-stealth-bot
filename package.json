@@ -1,7 +1,7 @@
 {
   "name": "zoom-stealth-bot",
   "version": "1.0.0",
-  "description": "Autonomous stealth Zoom meeting/webinar attendee bot with Telegram remote control and Gemini AI summaries",
+  "description": "Automates attending recurring Zoom webinars so you don't have to sit through them",
   "main": "src/index.js",
   "scripts": {
     "test": "node --test tests/*.test.js"
