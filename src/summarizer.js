@@ -60,14 +60,15 @@ async function summarizeMeetingFeed(transcript, apiKey, preferredModel) {
 
   const prompt = 
 `You are an assistant summarizing a Zoom Webinar.
-Analyze the following transcript of Webinar Questions, Answers, and Chat messages.
+Analyze the following transcript of Host Speech/Captions, Attendee Q&A, and Chat messages.
 Provide a clean, concise, direct summary in Telegram HTML format (use <b>, <i>, <code>, <a> tags).
 Do not use emojis.
 
 Sections:
-1. <b>Key Announcements and Updates</b> (Deadlines, instructions from mentors/host)
-2. <b>Important Links and Resources</b> (Forms, groups, portal URLs, course links - format with HTML links)
-3. <b>Frequently Asked Questions and Answers</b> (Top questions asked and answers provided)
+1. <b>Host Lecture & Key Topics Discussed</b> (Core concepts explained, main takeaways, workflow demonstrated)
+2. <b>Key Announcements and Updates</b> (Deadlines, instructions from mentors/host)
+3. <b>Important Links and Resources</b> (Forms, groups, portal URLs, course links - format with HTML links)
+4. <b>Frequently Asked Questions and Answers</b> (Top questions asked and answers provided)
 
 Transcript:
 ${transcript}`;

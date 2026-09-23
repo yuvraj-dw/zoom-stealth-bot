@@ -15,7 +15,8 @@ function getConfig() {
     heartbeatIntervalMinutes: Number(process.env.HEARTBEAT_INTERVAL_MINUTES) || 30,
     telegramBotToken: process.env.TELEGRAM_BOT_TOKEN || '',
     telegramChatId: process.env.TELEGRAM_CHAT_ID || '',
-    screenshotsDir: process.env.SCREENSHOTS_DIR || './screenshots'
+    screenshotsDir: process.env.SCREENSHOTS_DIR || './screenshots',
+    logsDir: process.env.LOGS_DIR || './logs'
   };
 }
 

@@ -80,9 +80,41 @@ async function isMeetingEnded(page) {
 }
 
 /**
- * Extracts all Q&A questions and answers plus chat messages from Zoom's React Fiber.
+ * Collapses live streaming subtitle mutations into completed sentences.
+ * @param {string[]} rawCaptions 
+ * @returns {string[]}
+ */
+function mergeCaptions(rawCaptions) {
+  // ponytail: greedy prefix compaction of rolling live captions
+  const merged = [];
+  let current = '';
+
+  for (const raw of rawCaptions) {
+    const text = String(raw || '')
+      .replace(/^Captions are on\s*/i, '')
+      .replace(/^[A-Z]{1,3}\s*\n/, '')
+      .trim();
+    if (!text) continue;
+
+    if (!current) {
+      current = text;
+    } else if (text.startsWith(current)) {
+      current = text;
+    } else if (current.startsWith(text)) {
+      continue;
+    } else {
+      merged.push(current);
+      current = text;
+    }
+  }
+  if (current) merged.push(current);
+  return merged;
+}
+
+/**
+ * Extracts all Q&A questions, chat messages, and live captions.
  * @param {import('playwright').Page} page 
- * @returns {Promise<{ transcript: string, qaCount: number, chatCount: number }>}
+ * @returns {Promise<{ transcript: string, qaCount: number, chatCount: number, captionCount: number, rawCaptions: string[], qaList: string[], chatList: string[] }>}
  */
 async function extractMeetingFeed(page) {
   try {
@@ -121,15 +153,24 @@ async function extractMeetingFeed(page) {
         return `[Chat #${idx + 1} from ${c.sender || c.name || 'User'}]: ${c.text || c.msg || ''}`;
       });
 
+      const rawCaptions = Array.isArray(window.__captions) ? [...window.__captions] : [];
+
       return {
         qaList: formattedQA,
-        chatList: formattedChat
+        chatList: formattedChat,
+        rawCaptions
       };
     });
 
+    const cleanCaptions = mergeCaptions(feed.rawCaptions || []);
+
     const lines = [];
+    if (cleanCaptions.length > 0) {
+      lines.push('=== HOST SPEECH & LIVE TRANSCRIPTION ===');
+      lines.push(...cleanCaptions);
+    }
     if (feed.qaList.length > 0) {
-      lines.push('=== WEBINAR Q&A SECTION ===');
+      lines.push('\n=== WEBINAR Q&A SECTION ===');
       lines.push(...feed.qaList);
     }
     if (feed.chatList.length > 0) {
@@ -140,10 +181,14 @@ async function extractMeetingFeed(page) {
     return {
       transcript: lines.join('\n\n'),
       qaCount: feed.qaList.length,
-      chatCount: feed.chatList.length
+      chatCount: feed.chatList.length,
+      captionCount: cleanCaptions.length,
+      rawCaptions: feed.rawCaptions || [],
+      qaList: feed.qaList,
+      chatList: feed.chatList
     };
   } catch (e) {
-    return { transcript: '', qaCount: 0, chatCount: 0 };
+    return { transcript: '', qaCount: 0, chatCount: 0, captionCount: 0, rawCaptions: [], qaList: [], chatList: [] };
   }
 }
 
@@ -440,6 +485,36 @@ async function joinMeeting(page, config) {
   await tryClick(page, audioSelectors, 5000);
 
   await page.waitForTimeout(3000);
+
+  // 8. Enable live captions/subtitles if available
+  // ponytail: enable closed captions and collect speech stream into window.__captions
+  try {
+    await page.evaluate(() => {
+      const btn = Array.from(document.querySelectorAll('button')).find(b => 
+        (b.getAttribute('aria-label') || '').includes('Show Captions') || b.innerText.includes('Show Captions')
+      );
+      if (btn) btn.click();
+
+      if (!window.__captions) {
+        window.__captions = [];
+        let last = '';
+        const obs = new MutationObserver(() => {
+          const items = document.querySelectorAll('.live-transcription-subtitle__item, .live-transcription-subtitle__box');
+          for (const el of items) {
+            const txt = (el.innerText || '').trim();
+            if (txt && txt !== last) {
+              last = txt;
+              window.__captions.push(txt);
+            }
+          }
+        });
+        obs.observe(document.body, { childList: true, subtree: true, characterData: true });
+      }
+    });
+  } catch (e) {
+    // ignore if caption setup fails
+  }
+
   const finalSnapshot = await takeSnapshot(page, screenshotsDir, `join-3-connected-${Date.now()}.png`);
 
   return { success: true, snapshot: finalSnapshot };
@@ -636,8 +711,30 @@ class SessionController {
               const { summarizeMeetingFeed } = require('./summarizer.js');
               summaryText = await summarizeMeetingFeed(feed.transcript, config.geminiApiKey, config.geminiModel);
             }
+
+            // Save raw meeting log and summary to disk
+            // ponytail: zero-dependency disk persistence using node:fs
+            const logsDir = config.logsDir || './logs';
+            if (!fs.existsSync(logsDir)) fs.mkdirSync(logsDir, { recursive: true });
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            const logFile = path.join(logsDir, `meeting-${config.meetingId}-${timestamp}.json`);
+            fs.writeFileSync(logFile, JSON.stringify({
+              meetingId: config.meetingId,
+              attendeeName: config.attendeeName,
+              startTime: this.startTime,
+              durationMs: elapsedMs,
+              qaCount: feed.qaCount,
+              chatCount: feed.chatCount,
+              captionCount: feed.captionCount,
+              rawCaptions: feed.rawCaptions,
+              qaList: feed.qaList,
+              chatList: feed.chatList,
+              transcript: feed.transcript,
+              summary: summaryText
+            }, null, 2), 'utf-8');
+            console.log(`[SessionController] Saved meeting logs and summary to: ${logFile}`);
           } catch (e) {
-            console.error('[SessionController] Error generating summary on end:', e);
+            console.error('[SessionController] Error generating summary or saving log on end:', e);
           }
 
           await sendTelegramMessage(
@@ -754,5 +851,6 @@ module.exports = {
   isMeetingEnded,
   joinMeeting,
   SessionController,
-  formatDuration
+  formatDuration,
+  mergeCaptions
 };

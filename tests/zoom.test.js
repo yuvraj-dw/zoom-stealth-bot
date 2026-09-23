@@ -6,8 +6,24 @@ const os = require('node:os');
 const {
   buildJoinUrl,
   takeSnapshot,
-  isMeetingEnded
+  isMeetingEnded,
+  mergeCaptions
 } = require('../src/zoom.js');
+
+test('mergeCaptions collapses streaming subtitle mutations into completed sentences', () => {
+  const raw = [
+    'Captions are on',
+    'TS\nToday we learn',
+    'Today we learn prompt engineering',
+    'Today we learn prompt engineering and chaining',
+    'Next slide please'
+  ];
+  const merged = mergeCaptions(raw);
+  assert.deepEqual(merged, [
+    'Today we learn prompt engineering and chaining',
+    'Next slide please'
+  ]);
+});
 
 test('buildJoinUrl returns correct join url without passcode and strips spaces', () => {
   const url1 = buildJoinUrl('123 456 7890');
