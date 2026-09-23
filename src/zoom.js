@@ -379,19 +379,45 @@ async function joinMeeting(page, config) {
     'input[placeholder*="password" i]'
   ];
   if (config.passcode) {
-    await tryFill(page, passcodeSelectors, config.passcode, 3000);
+    const filledPasscode = await tryFill(page, passcodeSelectors, config.passcode, 4000);
+    if (filledPasscode) {
+      console.log('[Join] Entered meeting passcode into prompt.');
+      await page.waitForTimeout(1000);
+    }
   }
 
   await takeSnapshot(page, screenshotsDir, `join-2-filled-${Date.now()}.png`);
 
   // 5. Click join button if visible
   const joinButtonSelectors = [
+    'button.preview-join-button:not(.disabled):not([disabled])',
     'button.preview-join-button',
     'button#preview-join-button',
     'button:has-text("Join")',
     'button[type="submit"]'
   ];
   await tryClick(page, joinButtonSelectors, 5000);
+
+  // Re-check: If passcode prompt or join button is still present, re-fill and click
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const pwdInput = page.locator('#input-for-pwd, input[name="inputpasscode"]').first();
+    if (pwdInput && typeof pwdInput.isVisible === 'function' && await pwdInput.isVisible({ timeout: 2000 }).catch(() => false)) {
+      console.log(`[Join] Passcode input still visible (attempt ${attempt + 1}), filling passcode...`);
+      if (typeof pwdInput.fill === 'function') {
+        await pwdInput.fill(config.passcode || '').catch(() => {});
+      }
+      await page.waitForTimeout(1000);
+      const joinBtn = page.locator('button.preview-join-button, button:has-text("Join")').first();
+      if (joinBtn && typeof joinBtn.isVisible === 'function' && await joinBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+        if (typeof joinBtn.click === 'function') {
+          await joinBtn.click().catch(() => {});
+        }
+        await page.waitForTimeout(4000);
+      }
+    } else {
+      break;
+    }
+  }
 
   await page.waitForTimeout(6000);
 
