@@ -10,7 +10,7 @@ function getConfig() {
     attendeeEmail: process.env.ATTENDEE_EMAIL || '',
     webinarToken: process.env.ZOOM_WEBINAR_TOKEN || '',
     geminiApiKey: process.env.GEMINI_API_KEY || '',
-    geminiModel: process.env.GEMINI_MODEL || 'gemini-flash-lite-latest',
+    geminiModel: process.env.GEMINI_MODEL || 'gemini-3.5-flash',
     maxDurationMinutes: Number(process.env.MAX_DURATION_MINUTES) || 180,
     heartbeatIntervalMinutes: Number(process.env.HEARTBEAT_INTERVAL_MINUTES) || 30,
     telegramBotToken: process.env.TELEGRAM_BOT_TOKEN || '',

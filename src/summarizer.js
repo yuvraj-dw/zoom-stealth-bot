@@ -1,18 +1,20 @@
 const https = require('https');
 
-// Low-usage / high-capacity models in priority order for resilience against high-demand spikes
+// Verified stable models in order of current capacity and response speed
 const MODELS = [
-  'models/gemini-flash-lite-latest',
-  'models/gemini-3.5-flash-lite',
+  'models/gemini-3.5-flash',
   'models/gemini-3.6-flash',
-  'models/gemini-flash-latest'
+  'models/gemini-3.5-flash-lite'
 ];
 
 async function callGemini(model, payload, apiKey) {
+  // Normalize model path without double encoding the slash
+  const cleanModel = model.startsWith('models/') ? model : `models/${model}`;
+
   return new Promise((resolve) => {
     const req = https.request({
       hostname: 'generativelanguage.googleapis.com',
-      path: `/v1beta/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`,
+      path: `/v1beta/${cleanModel}:generateContent?key=${encodeURIComponent(apiKey)}`,
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -32,7 +34,7 @@ async function callGemini(model, payload, apiKey) {
     });
 
     req.on('error', (err) => resolve({ error: err.message }));
-    req.setTimeout(25000, () => {
+    req.setTimeout(60000, () => {
       req.destroy();
       resolve({ error: 'timeout' });
     });
