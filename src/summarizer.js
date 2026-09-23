@@ -1,11 +1,10 @@
 const https = require('https');
 
-// Fallback models in priority order for resilience against high-demand spikes
+// Low-usage / high-capacity models in priority order for resilience against high-demand spikes
 const MODELS = [
-  'models/gemini-3.6-flash',
+  'models/gemini-flash-lite-latest',
   'models/gemini-3.5-flash-lite',
-  'models/gemini-3.5-flash',
-  'models/gemini-3.1-flash-lite',
+  'models/gemini-3.6-flash',
   'models/gemini-flash-latest'
 ];
 
