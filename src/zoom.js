@@ -574,7 +574,7 @@ class SessionController {
     return await takeSnapshot(this.page, this.screenshotsDir, filename);
   }
 
-  async getMeetingSummary(apiKey, preferredModel) {
+  async getMeetingSummary(apiKey, preferredModel, logsDir = './logs') {
     if (!this.active || !this.page) {
       return null;
     }
@@ -583,7 +583,33 @@ class SessionController {
       return 'No chat messages or Q&A questions are available yet in this session.';
     }
     const { summarizeMeetingFeed } = require('./summarizer.js');
-    return await summarizeMeetingFeed(feed.transcript, apiKey, preferredModel);
+    const summary = await summarizeMeetingFeed(feed.transcript, apiKey, preferredModel);
+
+    // ponytail: live disk persistence on every summary extraction
+    try {
+      if (!fs.existsSync(logsDir)) fs.mkdirSync(logsDir, { recursive: true });
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const logFile = path.join(logsDir, `meeting-${this.meetingId || 'active'}-${timestamp}.json`);
+      fs.writeFileSync(logFile, JSON.stringify({
+        meetingId: this.meetingId,
+        attendeeName: this.attendeeName,
+        startTime: this.startTime,
+        timestamp: new Date().toISOString(),
+        qaCount: feed.qaCount,
+        chatCount: feed.chatCount,
+        captionCount: feed.captionCount,
+        rawCaptions: feed.rawCaptions,
+        qaList: feed.qaList,
+        chatList: feed.chatList,
+        transcript: feed.transcript,
+        summary
+      }, null, 2), 'utf-8');
+      console.log(`[SessionController] Logged captions, chat, and summary to: ${logFile}`);
+    } catch (e) {
+      console.error('[SessionController] Failed to write log file:', e);
+    }
+
+    return summary;
   }
 
   async leaveMeeting() {

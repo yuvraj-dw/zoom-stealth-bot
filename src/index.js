@@ -127,7 +127,7 @@ function createBotDaemon({
       }
 
       await notifier.sendTelegramMessage(config.telegramBotToken, chatId, `Extracting webinar feed and generating summary...`);
-      const summary = await sessionController.getMeetingSummary(config.geminiApiKey, config.geminiModel);
+      const summary = await sessionController.getMeetingSummary(config.geminiApiKey, config.geminiModel, config.logsDir);
       if (summary) {
         await notifier.sendTelegramMessage(config.telegramBotToken, chatId, `<b>Webinar Summary and Links:</b>\n\n${summary}`);
       } else {
@@ -144,7 +144,7 @@ function createBotDaemon({
 
       // Optionally grab final summary before leaving
       try {
-        const summary = await sessionController.getMeetingSummary(config.geminiApiKey, config.geminiModel);
+        const summary = await sessionController.getMeetingSummary(config.geminiApiKey, config.geminiModel, config.logsDir);
         if (summary) {
           await notifier.sendTelegramMessage(config.telegramBotToken, chatId, `<b>Meeting Summary Before Leaving:</b>\n\n${summary}`);
         }
