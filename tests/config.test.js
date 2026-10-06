@@ -24,6 +24,7 @@ test('getConfig returns default fallback values when env vars are empty', () => 
   assert.equal(config.attendeeName, 'Attendee');
   assert.equal(config.attendeeEmail, '');
   assert.equal(config.webinarToken, '');
+  assert.equal(config.encryptedPwd, '');
   assert.equal(config.geminiApiKey, '');
   assert.equal(config.geminiModel, 'gemini-3.5-flash');
   assert.equal(config.maxDurationMinutes, 180);

@@ -25,6 +25,11 @@ test('mergeCaptions collapses streaming subtitle mutations into completed senten
   ]);
 });
 
+test('buildJoinUrl returns correct join url with webinarToken and encrypted pwd', () => {
+  const url = buildJoinUrl('87018687819', '582040', 'testTk123', 'yiwNbdfMIS6DDwxiVrDIqDmZpebRel.1');
+  assert.equal(url, 'https://app.zoom.us/wc/87018687819/join?prefer=1&tk=testTk123&pwd=yiwNbdfMIS6DDwxiVrDIqDmZpebRel.1');
+});
+
 test('buildJoinUrl returns correct join url without passcode and strips spaces', () => {
   const url1 = buildJoinUrl('123 456 7890');
   assert.equal(url1, 'https://app.zoom.us/wc/1234567890/join?prefer=1');

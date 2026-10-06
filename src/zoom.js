@@ -20,14 +20,18 @@ const END_INDICATORS = [
  * @param {string} meetingId 
  * @param {string} [passcode] 
  * @param {string} [webinarToken]
+ * @param {string} [encryptedPwd]
  * @returns {string}
  */
-function buildJoinUrl(meetingId, passcode, webinarToken) {
+function buildJoinUrl(meetingId, passcode, webinarToken, encryptedPwd) {
   const cleanId = String(meetingId || '').replace(/\s+/g, '');
   let url = `https://app.zoom.us/wc/${cleanId}/join?prefer=1`;
   if (webinarToken) {
     url += `&tk=${encodeURIComponent(webinarToken)}`;
-  } else if (passcode) {
+  }
+  if (encryptedPwd) {
+    url += `&pwd=${encodeURIComponent(encryptedPwd)}`;
+  } else if (passcode && !webinarToken) {
     const encodedPwd = Buffer.from(String(passcode)).toString('base64');
     url += `&pwd=${encodedPwd}`;
   }
@@ -244,7 +248,7 @@ async function tryFill(page, selectors, value, timeoutMs = 3000) {
  */
 async function joinMeeting(page, config) {
   const screenshotsDir = config.screenshotsDir || './screenshots';
-  const joinUrl = buildJoinUrl(config.meetingId, config.passcode, config.webinarToken);
+  const joinUrl = buildJoinUrl(config.meetingId, config.passcode, config.webinarToken, config.encryptedPwd);
 
   await page.goto(joinUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
   await page.waitForTimeout(3000);

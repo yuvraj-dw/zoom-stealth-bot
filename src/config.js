@@ -9,6 +9,7 @@ function getConfig() {
     attendeeName: process.env.ATTENDEE_NAME || 'Attendee',
     attendeeEmail: process.env.ATTENDEE_EMAIL || '',
     webinarToken: process.env.ZOOM_WEBINAR_TOKEN || '',
+    encryptedPwd: process.env.ZOOM_ENCRYPTED_PWD || '',
     geminiApiKey: process.env.GEMINI_API_KEY || '',
     geminiModel: process.env.GEMINI_MODEL || 'gemini-3.5-flash',
     maxDurationMinutes: Number(process.env.MAX_DURATION_MINUTES) || 180,
