@@ -100,12 +100,6 @@ npx playwright install chromium
 npm start
 ```
 
-Run test suite:
-
-```bash
-npm test
-```
-
 ---
 
 ## Telegram Bot Commands
